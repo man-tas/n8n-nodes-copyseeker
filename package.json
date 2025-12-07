@@ -1,0 +1,51 @@
+{
+  "name": "n8n-nodes-copyseeker",
+  "version": "1.0.1",
+  "description": "n8n node for Copyseeker Reverse Image Search API",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "copyseeker",
+    "reverse-image-search",
+    "image-search",
+    "copyright"
+  ],
+  "license": "MIT",
+  "homepage": "https://copyseeker.net",
+  "author": {
+    "name": "Copyseeker",
+    "email": "support@copyseeker.net"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://copyseeker.net"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "format": "prettier nodes --write",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/CopyseekerApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Copyseeker/Copyseeker.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "n8n-workflow": "*",
+    "typescript": "^5.0.0",
+    "prettier": "^2.8.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

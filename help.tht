@@ -1,0 +1,10 @@
+Add and commit your code:
+
+bashgit add .
+git commit -m "Initial commit: Copyseeker n8n community node"
+
+Add remote and push:
+
+bashgit remote add origin https://github.com/YOUR_USERNAME/n8n-nodes-copyseeker.git
+git branch -M main
+git push -u origin main
