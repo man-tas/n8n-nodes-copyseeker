@@ -13,7 +13,7 @@ export class Copyseeker implements INodeType {
 		icon: 'file:copyseeker.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["operation"]}}',
+		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Reverse image search and copyright analysis',
 		defaults: {
 			name: 'Copyseeker',
@@ -28,13 +28,31 @@ export class Copyseeker implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Operation',
-				name: 'operation',
+				displayName: 'Resource',
+				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Reverse Image Search',
+						name: 'Image',
+						value: 'image',
+					},
+				],
+				default: 'image',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['image'],
+					},
+				},
+				options: [
+					{
+						name: 'Reverse Search',
 						value: 'reverseSearch',
 						description: 'Find where an image appears online',
 						action: 'Perform reverse image search',
@@ -54,6 +72,11 @@ export class Copyseeker implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
+				displayOptions: {
+					show: {
+						resource: ['image'],
+					},
+				},
 				placeholder: 'https://example.com/image.jpg',
 				description: 'Direct URL to the image file (JPG, PNG, GIF, WebP)',
 			},
@@ -64,6 +87,7 @@ export class Copyseeker implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
+						resource: ['image'],
 						operation: ['siteSearch'],
 					},
 				},
@@ -77,6 +101,11 @@ export class Copyseeker implements INodeType {
 				type: 'collection',
 				placeholder: 'Add Option',
 				default: {},
+				displayOptions: {
+					show: {
+						resource: ['image'],
+					},
+				},
 				options: [
 					{
 						displayName: 'Return Full Response',
@@ -115,79 +144,83 @@ export class Copyseeker implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
+				const resource = this.getNodeParameter('resource', i) as string;
 				const operation = this.getNodeParameter('operation', i) as string;
-				const imageUrl = this.getNodeParameter('imageUrl', i) as string;
-				const additionalOptions = this.getNodeParameter('additionalOptions', i, {}) as {
-					fullResponse?: boolean;
-					minRank?: number;
-					includeVisuallySimilar?: boolean;
-				};
 
-				const params: { [key: string]: string } = {
-					imageUrl,
-				};
-
-				if (operation === 'siteSearch') {
-					const targetSite = this.getNodeParameter('targetSite', i) as string;
-					params.targetSite = targetSite;
-				}
-
-				const queryString = new URLSearchParams(params).toString();
-				const url = `https://reverse-image-search-by-copyseeker.p.rapidapi.com/?${queryString}`;
-
-				const options = {
-					method: 'GET' as const,
-					url: url,
-					json: true,
-				};
-
-				const response = await this.helpers.httpRequestWithAuthentication.call(
-					this,
-					'copyseekerApi',
-					options,
-				);
-
-				let filteredResponse = { ...response };
-
-				if (additionalOptions.minRank !== undefined && additionalOptions.minRank > 0) {
-					if (filteredResponse.Pages) {
-						filteredResponse.Pages = filteredResponse.Pages.filter(
-							(page: any) => page.Rank >= (additionalOptions.minRank as number),
-						);
-					}
-				}
-
-				if (additionalOptions.includeVisuallySimilar === false) {
-					delete filteredResponse.VisuallySimilar;
-				}
-
-				if (additionalOptions.fullResponse) {
-					returnData.push({
-						json: filteredResponse,
-						pairedItem: i,
-					});
-				} else {
-					const simplifiedData = {
-						bestGuess: filteredResponse.BestGuessLabel || 'Unknown',
-						totalMatches: filteredResponse.Pages?.length || 0,
-						highestRankedSource: filteredResponse.Pages?.[0]
-							? {
-									url: filteredResponse.Pages[0].Url,
-									title: filteredResponse.Pages[0].Title,
-									rank: filteredResponse.Pages[0].Rank,
-							  }
-							: null,
-						topEntities: filteredResponse.Entities?.slice(0, 3).map((e: any) => e.Description) || [],
-						visuallySimilarCount: filteredResponse.VisuallySimilar?.length || 0,
-						allPages: filteredResponse.Pages || [],
-						entities: filteredResponse.Entities || [],
-						visuallySimilar: filteredResponse.VisuallySimilar || [],
+				if (resource === 'image') {
+					const imageUrl = this.getNodeParameter('imageUrl', i) as string;
+					const additionalOptions = this.getNodeParameter('additionalOptions', i, {}) as {
+						fullResponse?: boolean;
+						minRank?: number;
+						includeVisuallySimilar?: boolean;
 					};
 
-					returnData.push({
-						json: simplifiedData,
-						pairedItem: i,
-					});
+					const params: { [key: string]: string } = {
+						imageUrl,
+					};
+
+					if (operation === 'siteSearch') {
+						const targetSite = this.getNodeParameter('targetSite', i) as string;
+						params.targetSite = targetSite;
+					}
+
+					const queryString = new URLSearchParams(params).toString();
+					const url = `https://reverse-image-search-by-copyseeker.p.rapidapi.com/?${queryString}`;
+
+					const options = {
+						method: 'GET' as const,
+						url: url,
+						json: true,
+					};
+
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'copyseekerApi',
+						options,
+					);
+
+					let filteredResponse = { ...response };
+
+					if (additionalOptions.minRank !== undefined && additionalOptions.minRank > 0) {
+						if (filteredResponse.Pages) {
+							filteredResponse.Pages = filteredResponse.Pages.filter(
+								(page: any) => page.Rank >= (additionalOptions.minRank as number),
+							);
+						}
+					}
+
+					if (additionalOptions.includeVisuallySimilar === false) {
+						delete filteredResponse.VisuallySimilar;
+					}
+
+					if (additionalOptions.fullResponse) {
+						returnData.push({
+							json: filteredResponse,
+							pairedItem: i,
+						});
+					} else {
+						const simplifiedData = {
+							bestGuess: filteredResponse.BestGuessLabel || 'Unknown',
+							totalMatches: filteredResponse.Pages?.length || 0,
+							highestRankedSource: filteredResponse.Pages?.[0]
+								? {
+										url: filteredResponse.Pages[0].Url,
+										title: filteredResponse.Pages[0].Title,
+										rank: filteredResponse.Pages[0].Rank,
+								  }
+								: null,
+							topEntities: filteredResponse.Entities?.slice(0, 3).map((e: any) => e.Description) || [],
+							visuallySimilarCount: filteredResponse.VisuallySimilar?.length || 0,
+							allPages: filteredResponse.Pages || [],
+							entities: filteredResponse.Entities || [],
+							visuallySimilar: filteredResponse.VisuallySimilar || [],
+						};
+
+						returnData.push({
+							json: simplifiedData,
+							pairedItem: i,
+						});
+					}
 				}
 			} catch (error) {
 				if (this.continueOnFail()) {
