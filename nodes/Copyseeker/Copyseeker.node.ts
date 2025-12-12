@@ -113,9 +113,6 @@ export class Copyseeker implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 
-		const credentials = await this.getCredentials('copyseekerApi');
-		const apiKey = credentials.apiKey as string;
-
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const operation = this.getNodeParameter('operation', i) as string;
@@ -140,15 +137,15 @@ export class Copyseeker implements INodeType {
 
 				const options = {
 					method: 'GET' as const,
-					headers: {
-						'X-RapidAPI-Key': apiKey,
-						'X-RapidAPI-Host': 'reverse-image-search-by-copyseeker.p.rapidapi.com',
-					},
 					url: url,
 					json: true,
 				};
 
-				const response = await this.helpers.httpRequest(options);
+				const response = await this.helpers.httpRequestWithAuthentication.call(
+					this,
+					'copyseekerApi',
+					options,
+				);
 
 				let filteredResponse = { ...response };
 
